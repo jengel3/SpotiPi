@@ -2,3 +2,4 @@
 config.json
 sftp-config.json
 tmp/
+*.pyc
