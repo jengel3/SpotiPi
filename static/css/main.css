@@ -1,0 +1,83 @@
+body {
+	background-color: #cddc39 !important;
+	color: white !important;
+	font-family: 'Montserrat', sans-serif;
+}
+
+::-webkit-scrollbar {
+    display: none;
+}
+
+table tr th {
+	text-align: left;
+}
+
+table {
+	background-color: white;
+	color: black;
+}
+
+table th {
+	text-transform: uppercase;
+	font-weight: 100;
+}
+
+.songs {
+	font-size: 12px;
+	font-weight: 100;
+}
+
+.controls {
+	text-align: center;
+}
+
+.search-bar {
+	margin-bottom: 30px;
+}
+
+.player-wrapper {
+	text-align: center;
+	background-color: white;
+	padding: 15px;
+	border: 1px solid black;
+	display: none;
+	color: black;
+}
+
+.playing-cover {
+	max-width: 100%;
+	height: auto;
+}
+
+.player-wrapper.loaded {
+	display: block;
+}
+
+.player-wrapper .fa-play, .player-wrapper .fa-stop, .player-wrapper .fa-pause {
+	display: none;
+}
+
+.player-wrapper.loaded .fa-play {
+	display: inline-block;
+}
+
+.player-wrapper.playing .fa-pause, .player-wrapper.playing .fa-stop {
+	display: inline-block;
+}
+
+.player-wrapper.playing .fa-play {
+	display: none;
+}
+
+.player-wrapper .fa-forward, .player-wrapper .fa-backward {
+	display: none;
+}
+
+.player-wrapper.playing.playlist .fa-forward/*,.player-wrapper.playing.playlist .fa-backward */{
+	display: inline-block;
+}
+
+.player-controls {
+	display: inline-block;
+	margin-top: 8px;
+}

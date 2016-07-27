@@ -1,0 +1,12 @@
+.widget {
+	background-color: #cddc39;
+	text-align: center;
+	color: white;
+	padding: 15px;
+	height: 300px;
+}
+
+body {
+	background-color: black;
+	color: white;
+}

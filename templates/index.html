@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+	<title>SpotiPi</title>
+
+	<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+	<link href='https://fonts.googleapis.com/css?family=Montserrat' rel='stylesheet' type='text/css'>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/keyboard.css') }}">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+	<script src="{{ url_for('static', filename='js/jquery.loadTemplate.min.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/jquery.onScreenKeyboard.min.js') }}"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css">
+</head>
+<body>
+	<div class="container">
+		<div class="row">
+			<div class="col-md-12">
+				<div class='page-header'>
+
+					<h1>Spotify Player</h1>
+				</div>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-xs-12">
+				<form action="search" id="song-search" class='search-bar'>
+					<div class="input-group">
+						<span class="input-group-btn">
+							<button class="btn btn-default" type="submit">Go!</button>
+						</span>
+						<input type="text" class="form-control" id='search-input' data-osk-options="disableTab disableSymbols" placeholder="Search for...">
+					</div>
+				</form>
+				<div class="btn btn-block btn-primary playlist-button">Choose Playlist</div>
+			</div>
+			<div class="col-xs-12 col-sm-3 col-md-3 col-sm-push-9">
+				<div class="player-wrapper">
+					<div class="row">
+						<div class="col-md-12">
+							<img src="" alt="" class="playing-cover">
+						</div>
+						<div class="col-md-12 song-info">
+
+						</div>
+						<div class="col-md-12 player-controls">
+							<div class="fa fa-backward fa-2x"></div>
+							<div class="fa fa-play fa-2x"></div>
+							<div class="fa fa-pause fa-2x"></div>
+							<div class="fa fa-stop fa-2x"></div>
+							<div class="fa fa-forward fa-2x"></div>
+						</div>
+
+					</div>
+				</div>
+			</div>
+			<div class="col-xs-12 col-sm-9 col-md-9 col-sm-pull-3">
+
+				<table class='table songs-table'>
+					<thead>
+
+					</thead>
+					<tbody class="songs">
+
+					</tbody>
+				</table>
+			</div>
+
+		</div>
+	</div>
+
+	<script type="text/html" id="track">
+		<tr data-id='song' class='track'>
+			<td class='controls'>
+				<a href="#"><div class="fa fa-play fa-2x"></div></a>
+			</td>
+			<td data-content="track"></td>
+			<td data-content="artist"></td>
+			<td data-content="album" class='hidden-xs'></td>
+			<td data-content="length"></td>
+		</tr>
+	</script>
+
+	<script type="text/html" id="playlist">
+		<tr data-id='playlist' class='playlist'>
+			<td class='controls'>
+				<a href="#"><div class="fa fa-play fa-2x"></div></a>
+			</td>
+			<td data-content="name"></td>
+			<td data-content="tracks"></td>
+			<td data-content="length"></td>
+		</tr>
+	</script>
+	<script type="text/html" id="tracks-thead">
+		<tr>
+			<th></th>
+			<th>Track</th>
+			<th>Artist</th>
+			<th class='hidden-xs'>Album</th>
+			<th>Length</th>
+		</tr>
+	</script>
+
+	<script type="text/html" id="playlist-thead">
+		<tr>
+			<th></th>
+			<th>Name</th>
+			<th>Tracks</th>
+			<th>Duration</th>
+		</tr>
+	</script>
+</body>
+
+
+
+<script>
+	var socket = io();
+
+	// method to detect rpi.. hard to be sure about, may need customization
+	if (window.navigator.userAgent.indexOf("Ubuntu") > -1) {
+		$("#search-input").onScreenKeyboard({
+			'rewireReturn': 'submit'
+		});
+	}
+	socket.on('data', function (raw) {
+		// console.log(raw, "DATAAAAAaa")
+		var json = JSON.parse(raw);
+		var type = json['type'];
+		var data = json['data'];
+		$(".songs").empty();
+		$(".songs-table thead").empty();
+		if (type === 'tracks') {
+			$(".songs-table thead").loadTemplate($("#tracks-thead"), {}, {append: true})
+			for (var track of data['tracks']) {
+				var dur = track['duration'] / 1000;
+
+				var mins = Math.floor(dur / 60);
+				var sec = dur - (mins * 60);
+				var strTime = mins + ":" + (sec < 10 ? (sec + "0") : sec);
+				$(".songs").loadTemplate($("#track"),
+				{
+					track: track['name'],
+					album: track['album']['name'],
+					artist: track['artist']['name'],
+					length: strTime,
+					song: track['uri']
+				}, {append: true});
+			}
+		} else if (type === 'playlists') {
+			$(".songs-table thead").loadTemplate($("#playlist-thead"), {}, {append: true});
+			for (var playlist of data['playlists']) {
+				var name = playlist['name'];
+				var tracks = playlist['track_count'];
+				var playlist = playlist['uri'];
+
+				$(".songs").loadTemplate($("#playlist"),
+				{
+					name: name,
+					tracks: tracks,
+					playlist: playlist
+				}, {append: true});
+			}
+		}
+	});
+
+	socket.emit('action', {'action': 'update'})
+
+	socket.on('action', function(data) {
+		var json = JSON.parse(data);
+		var action = json['action'];
+
+		var data = json['data'];
+		switch(action) {
+			case "playing":
+			var track = data['track'];
+			var paused = data['paused'];
+			var cover = track['album']['cover'];
+			$(".playing-cover").attr("src", cover);
+			if (!paused) {
+				$(".player-wrapper").addClass("playing");
+			}
+			$(".player-wrapper").addClass("loaded");
+			var isPlaylist = data['is_playlist'];
+			if (isPlaylist) {
+				$(".player-wrapper").addClass("playlist");
+			} else {
+				$(".player-wrapper").removeClass("playlist");
+			}
+			$(".player-wrapper .song-info").text(track['name'] + " by " + track['artist']['name']);
+			break;
+			case "stopped":
+			$(".player-wrapper").removeClass("playing");
+			$(".player-wrapper").removeClass("loaded");
+			break;
+			case "paused":
+			$(".player-wrapper").removeClass("playing");
+			break;
+			default:
+			break;
+		}
+	});
+
+	$(document).on("click", ".fa-play", function(e) {
+		var tr = $(this).parent().parent().parent();
+		var id = $(tr).attr("id");
+
+		if ($(tr).hasClass('track')) {
+			socket.emit('action', {'action': 'play', data: {track: id}});
+		} else {
+			socket.emit('action', {'action': 'play', data: {playlist: id}});
+		}
+
+		e.preventDefault();
+		return false;
+	});
+
+	$("#song-search").submit(function(e) {
+		var text = $(this).find("input").val();
+		socket.emit('action', {'action': 'search', data: {query: text}})
+		e.preventDefault();
+	});
+
+	$(".player-controls .fa-pause").click(function() {
+		socket.emit('action', {'action': 'pause'});
+	})
+
+	$(".player-controls .fa-forward").click(function() {
+		socket.emit('action', {'action': 'skip'});
+	})
+
+	$(".player-controls .fa-play").click(function() {
+		socket.emit('action', {'action': 'play'});
+	})
+
+	$(".player-controls .fa-stop").click(function() {
+		socket.emit('action', {'action': 'stop'});
+	})
+
+	$(".playlist-button").click(function() {
+		socket.emit('action', {'action': 'playlists'})
+	});
+</script>
+</html>
